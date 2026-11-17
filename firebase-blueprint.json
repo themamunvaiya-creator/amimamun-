@@ -1,0 +1,402 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile for the organization app.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "orgRole": {
+          "type": "string",
+          "description": "Member role label in the organization"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation via FieldValue.serverTimestamp()"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update via FieldValue.serverTimestamp()"
+        }
+      },
+      "required": ["userId", "displayName", "orgRole", "createdAt", "updatedAt"]
+    },
+    "OrgMember": {
+      "title": "OrgMember",
+      "description": "Organization member directory record.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase UID"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Member full name in Bengali or English"
+        },
+        "designation": {
+          "type": "string",
+          "description": "Organization designation such as President, Secretary, Treasurer, or Member"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Member phone number"
+        },
+        "bloodGroup": {
+          "type": "string",
+          "description": "Blood group string e.g. A+, B+, O+, AB+"
+        },
+        "ward": {
+          "type": "string",
+          "description": "Area or para inside Purbo Harbang Mukiaghona"
+        },
+        "monthlyFee": {
+          "type": "integer",
+          "description": "Committed monthly subscription amount in BDT"
+        },
+        "activeStatus": {
+          "type": "boolean",
+          "description": "Whether member is currently active"
+        },
+        "joinedDateLabel": {
+          "type": "string",
+          "description": "Human readable joining date"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes about member responsibilities"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update"
+        }
+      },
+      "required": [
+        "userId",
+        "fullName",
+        "designation",
+        "phone",
+        "bloodGroup",
+        "ward",
+        "monthlyFee",
+        "activeStatus",
+        "joinedDateLabel",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DonationRecord": {
+      "title": "DonationRecord",
+      "description": "Organization donation income or expense ledger entry.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase UID"
+        },
+        "titleOrDonor": {
+          "type": "string",
+          "description": "Donor name or expense title"
+        },
+        "txType": {
+          "type": "string",
+          "enum": ["INCOME", "EXPENSE"],
+          "description": "Transaction direction"
+        },
+        "category": {
+          "type": "string",
+          "description": "Fund category such as Monthly Fee, Zakat, Sadakah, Welfare, Iftar, Mosque"
+        },
+        "amount": {
+          "type": "integer",
+          "description": "Amount in BDT"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Cash, bKash, Nagad, or Bank"
+        },
+        "dateLabel": {
+          "type": "string",
+          "description": "Display date label"
+        },
+        "receiptNumber": {
+          "type": "string",
+          "description": "Optional receipt or voucher number"
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional remark"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update"
+        }
+      },
+      "required": [
+        "userId",
+        "titleOrDonor",
+        "txType",
+        "category",
+        "amount",
+        "paymentMethod",
+        "dateLabel",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ActivityNotice": {
+      "title": "ActivityNotice",
+      "description": "Organization activity schedule and notification item.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase UID"
+        },
+        "title": {
+          "type": "string",
+          "description": "Activity or notice headline"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the program or announcement"
+        },
+        "category": {
+          "type": "string",
+          "description": "Activity category e.g. Meeting, Dawah, Welfare, Blood Donation, Notice"
+        },
+        "eventDateLabel": {
+          "type": "string",
+          "description": "Scheduled date string"
+        },
+        "eventTimeLabel": {
+          "type": "string",
+          "description": "Scheduled time string"
+        },
+        "venue": {
+          "type": "string",
+          "description": "Location or mosque/madrasa venue"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["NORMAL", "URGENT"],
+          "description": "Urgency level"
+        },
+        "readStatus": {
+          "type": "boolean",
+          "description": "Whether the notice has been marked read"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update"
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "description",
+        "category",
+        "eventDateLabel",
+        "eventTimeLabel",
+        "venue",
+        "priority",
+        "readStatus",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "QuranBookmark": {
+      "title": "QuranBookmark",
+      "description": "Saved Quran Ayah bookmark or reading position.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase UID"
+        },
+        "surahNumber": {
+          "type": "integer",
+          "description": "Surah number 1..114"
+        },
+        "ayahNumber": {
+          "type": "integer",
+          "description": "Ayah number within Surah"
+        },
+        "surahNameBn": {
+          "type": "string",
+          "description": "Bengali name of Surah"
+        },
+        "surahNameAr": {
+          "type": "string",
+          "description": "Arabic name of Surah"
+        },
+        "ayahTextAr": {
+          "type": "string",
+          "description": "Arabic ayah snippet"
+        },
+        "ayahTextBn": {
+          "type": "string",
+          "description": "Bengali translation snippet"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update"
+        }
+      },
+      "required": [
+        "userId",
+        "surahNumber",
+        "ayahNumber",
+        "surahNameBn",
+        "surahNameAr",
+        "ayahTextAr",
+        "ayahTextBn",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DuaFavorite": {
+      "title": "DuaFavorite",
+      "description": "Bookmarked daily Dua entry.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase UID"
+        },
+        "duaId": {
+          "type": "string",
+          "description": "Identifier of the daily Dua"
+        },
+        "titleBn": {
+          "type": "string",
+          "description": "Bengali title of the Dua"
+        },
+        "category": {
+          "type": "string",
+          "description": "Dua category"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update"
+        }
+      },
+      "required": ["userId", "duaId", "titleBn", "category", "createdAt", "updatedAt"]
+    },
+    "TasbihState": {
+      "title": "TasbihState",
+      "description": "Digital Tasbih dhikr counter state.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase UID"
+        },
+        "dhikrName": {
+          "type": "string",
+          "description": "Active dhikr phrase"
+        },
+        "currentCount": {
+          "type": "integer",
+          "description": "Current cycle count"
+        },
+        "targetCount": {
+          "type": "integer",
+          "description": "Cycle target (33, 99, 100, 1000)"
+        },
+        "lifetimeCount": {
+          "type": "integer",
+          "description": "Total cumulative dhikr count"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update"
+        }
+      },
+      "required": [
+        "userId",
+        "dhikrName",
+        "currentCount",
+        "targetCount",
+        "lifetimeCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Authenticated user profile document."
+    },
+    "/users/{userId}/members/{memberId}": {
+      "schema": { "$ref": "#/entities/OrgMember" },
+      "description": "Organization member list entries."
+    },
+    "/users/{userId}/donations/{donationId}": {
+      "schema": { "$ref": "#/entities/DonationRecord" },
+      "description": "Organization donation and expense ledger entries."
+    },
+    "/users/{userId}/activities/{activityId}": {
+      "schema": { "$ref": "#/entities/ActivityNotice" },
+      "description": "Organization activities and notification alerts."
+    },
+    "/users/{userId}/quran_bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/QuranBookmark" },
+      "description": "Saved Quran Ayah bookmarks."
+    },
+    "/users/{userId}/dua_favorites/{duaId}": {
+      "schema": { "$ref": "#/entities/DuaFavorite" },
+      "description": "Favorite daily Dua records."
+    },
+    "/users/{userId}/tasbih_progress/{progressId}": {
+      "schema": { "$ref": "#/entities/TasbihState" },
+      "description": "Digital Tasbih counter state."
+    }
+  }
+}

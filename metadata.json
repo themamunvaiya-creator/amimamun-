@@ -1,0 +1,6 @@
+{
+  "name": "মুকিয়াঘোনা যুব সংগঠন",
+  "description": "পূর্ব হারবাং মুকিয়াঘোনা ইসলামিক যুব সংগঠন — সদস্য তালিকা, দানের হিসাব, কার্যক্রম ও নোটিফিকেশন, প্রতিদিনের দোয়া এবং কোরআন শরীফ।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

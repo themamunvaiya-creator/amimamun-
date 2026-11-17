@@ -1,0 +1,305 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Shared Security Primitives ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Helpers ---
+
+    function isValidUserProfile(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+             data.orgRole is string && data.orgRole.size() >= 1 && data.orgRole.size() <= 60 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidOrgMember(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100 &&
+             data.designation is string && data.designation.size() >= 1 && data.designation.size() <= 80 &&
+             data.phone is string && data.phone.size() >= 3 && data.phone.size() <= 25 &&
+             data.bloodGroup is string && data.bloodGroup.size() >= 1 && data.bloodGroup.size() <= 20 &&
+             data.ward is string && data.ward.size() >= 1 && data.ward.size() <= 100 &&
+             data.monthlyFee is int && data.monthlyFee >= 0 && data.monthlyFee <= 1000000 &&
+             data.activeStatus is bool &&
+             data.joinedDateLabel is string && data.joinedDateLabel.size() >= 1 && data.joinedDateLabel.size() <= 40 &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 500)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidDonationRecord(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.titleOrDonor is string && data.titleOrDonor.size() >= 1 && data.titleOrDonor.size() <= 120 &&
+             data.txType is string && data.txType in ['INCOME', 'EXPENSE'] &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             data.amount is int && data.amount >= 1 && data.amount <= 100000000 &&
+             data.paymentMethod is string && data.paymentMethod.size() >= 1 && data.paymentMethod.size() <= 40 &&
+             data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 40 &&
+             (!('receiptNumber' in data) || (data.receiptNumber is string && data.receiptNumber.size() <= 60)) &&
+             (!('note' in data) || (data.note is string && data.note.size() <= 500)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidActivityNotice(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+             data.description is string && data.description.size() >= 1 && data.description.size() <= 2000 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.eventDateLabel is string && data.eventDateLabel.size() >= 1 && data.eventDateLabel.size() <= 50 &&
+             data.eventTimeLabel is string && data.eventTimeLabel.size() >= 1 && data.eventTimeLabel.size() <= 50 &&
+             data.venue is string && data.venue.size() >= 1 && data.venue.size() <= 150 &&
+             data.priority is string && data.priority in ['NORMAL', 'URGENT'] &&
+             data.readStatus is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidQuranBookmark(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.surahNumber is int && data.surahNumber >= 1 && data.surahNumber <= 114 &&
+             data.ayahNumber is int && data.ayahNumber >= 1 && data.ayahNumber <= 286 &&
+             data.surahNameBn is string && data.surahNameBn.size() >= 1 && data.surahNameBn.size() <= 100 &&
+             data.surahNameAr is string && data.surahNameAr.size() >= 1 && data.surahNameAr.size() <= 100 &&
+             data.ayahTextAr is string && data.ayahTextAr.size() >= 1 && data.ayahTextAr.size() <= 4000 &&
+             data.ayahTextBn is string && data.ayahTextBn.size() >= 1 && data.ayahTextBn.size() <= 4000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidDuaFavorite(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.duaId is string && data.duaId.size() >= 1 && data.duaId.size() <= 80 &&
+             data.titleBn is string && data.titleBn.size() >= 1 && data.titleBn.size() <= 160 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidTasbihState(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.dhikrName is string && data.dhikrName.size() >= 1 && data.dhikrName.size() <= 120 &&
+             data.currentCount is int && data.currentCount >= 0 && data.currentCount <= 100000 &&
+             data.targetCount is int && data.targetCount >= 1 && data.targetCount <= 100000 &&
+             data.lifetimeCount is int && data.lifetimeCount >= 0 && data.lifetimeCount <= 100000000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // --- Collection Rules ---
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'orgRole', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'orgRole', 'createdAt', 'updatedAt']) &&
+                       isValidUserProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'orgRole', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /members/{memberId} {
+        allow get: if isOwner(userId) && isValidId(memberId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(memberId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'fullName', 'designation', 'phone', 'bloodGroup',
+                           'ward', 'monthlyFee', 'activeStatus', 'joinedDateLabel', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'fullName', 'designation', 'phone', 'bloodGroup',
+                           'ward', 'monthlyFee', 'activeStatus', 'joinedDateLabel', 'notes', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidOrgMember(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(memberId) &&
+                         isValidOrgMember(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'fullName', 'designation', 'phone', 'bloodGroup',
+                           'ward', 'monthlyFee', 'activeStatus', 'joinedDateLabel', 'notes', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(memberId);
+      }
+
+      match /donations/{donationId} {
+        allow get: if isOwner(userId) && isValidId(donationId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(donationId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'titleOrDonor', 'txType', 'category', 'amount',
+                           'paymentMethod', 'dateLabel', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'titleOrDonor', 'txType', 'category', 'amount',
+                           'paymentMethod', 'dateLabel', 'receiptNumber', 'note', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidDonationRecord(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(donationId) &&
+                         isValidDonationRecord(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'titleOrDonor', 'txType', 'category', 'amount',
+                           'paymentMethod', 'dateLabel', 'receiptNumber', 'note', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(donationId);
+      }
+
+      match /activities/{activityId} {
+        allow get: if isOwner(userId) && isValidId(activityId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(activityId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'title', 'description', 'category', 'eventDateLabel',
+                           'eventTimeLabel', 'venue', 'priority', 'readStatus', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'title', 'description', 'category', 'eventDateLabel',
+                           'eventTimeLabel', 'venue', 'priority', 'readStatus', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidActivityNotice(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(activityId) &&
+                         isValidActivityNotice(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['readStatus', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'title', 'description', 'category', 'eventDateLabel',
+                             'eventTimeLabel', 'venue', 'priority', 'readStatus', 'updatedAt'
+                           ])
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(activityId);
+      }
+
+      match /quran_bookmarks/{bookmarkId} {
+        allow get: if isOwner(userId) && isValidId(bookmarkId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(bookmarkId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'surahNumber', 'ayahNumber', 'surahNameBn',
+                           'surahNameAr', 'ayahTextAr', 'ayahTextBn', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'surahNumber', 'ayahNumber', 'surahNameBn',
+                           'surahNameAr', 'ayahTextAr', 'ayahTextBn', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidQuranBookmark(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(bookmarkId) &&
+                         isValidQuranBookmark(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'surahNumber', 'ayahNumber', 'surahNameBn',
+                           'surahNameAr', 'ayahTextAr', 'ayahTextBn', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(bookmarkId);
+      }
+
+      match /dua_favorites/{duaId} {
+        allow get: if isOwner(userId) && isValidId(duaId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(duaId) &&
+                         incoming().keys().hasAll(['userId', 'duaId', 'titleBn', 'category', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'duaId', 'titleBn', 'category', 'createdAt', 'updatedAt']) &&
+                         isValidDuaFavorite(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(duaId) &&
+                         isValidDuaFavorite(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['titleBn', 'category', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(duaId);
+      }
+
+      match /tasbih_progress/{progressId} {
+        allow get: if isOwner(userId) && isValidId(progressId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(progressId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'dhikrName', 'currentCount', 'targetCount',
+                           'lifetimeCount', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'dhikrName', 'currentCount', 'targetCount',
+                           'lifetimeCount', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidTasbihState(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(progressId) &&
+                         isValidTasbihState(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'dhikrName', 'currentCount', 'targetCount', 'lifetimeCount', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(progressId);
+      }
+    }
+  }
+}
